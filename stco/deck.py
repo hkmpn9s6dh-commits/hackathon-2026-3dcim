@@ -557,4 +557,13 @@ def build(res, outdir, sitedir):
             shutil.copy2(os.path.join(fig_abs, name), os.path.join(site_fig, name))
     with open(os.path.join(sitedir, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
+
+    # GitHub Pages 只允许 / 或 /docs：把同一份页面镜像到 docs/，四闸记录也在那里，一起公开
+    docsite = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
+    os.makedirs(os.path.join(docsite, "figures"), exist_ok=True)
+    for name in os.listdir(fig_abs):
+        if name.endswith(".png"):
+            shutil.copy2(os.path.join(fig_abs, name), os.path.join(docsite, "figures", name))
+    with open(os.path.join(docsite, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html)
     return pdf
