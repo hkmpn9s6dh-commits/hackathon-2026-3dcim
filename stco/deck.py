@@ -87,6 +87,7 @@ def build(res, outdir, sitedir):
     place = res["placement"]
     sens = res["sensitivity"]
     target = res["params"]["workload"]["tok_s_target"]["value"]
+    i_max_ma = res["params"]["pdn"]["tsv_i_max"]["value"] * 1e3
     q_air = res["params"]["cooling"]["air"]["q_max"]
     q_liq = res["params"]["cooling"]["liquid"]["q_max"]
     # 吞吐上限恒等式（不含泄漏时的闭式值，用来解释平台）
@@ -129,8 +130,8 @@ def build(res, outdir, sitedir):
            "装不下的 938 MB/token 走外部 HBM，每 bit 5 pJ"])}
     {_row(["风冷多一层有用吗", f"没有：3 层 {_f(airn[3]['tok_s_max'], 0)} → 8 层 {_f(airn[8]['tok_s_max'], 0)}",
            f"足迹热流密度锁在 {_f(q_air, 1)} W/mm²，功率天花板不随层数变"])}
-    {_row(["冷板多一层有用吗", f"到第 4 层为止：{_f(liqn[4]['tok_s_max'], 0)}（+{_f((liqn[4]['tok_s_max'] / dp['tok_s_max'] - 1) * 100, 0)}%）；第 5 层起 {_f(liqn[5]['tok_s_max'], 0)} 不再涨",
-           f"冷板预算 {_f(q_liq, 1)} W/mm² = 48 W；第 5 层起算力已够、功耗够不着"])}
+    {_row(["冷板多一层有用吗", f"也没有：3 层 {_f(dp['tok_s_max'], 0)} → 4 层 {_f(liqn[4]['tok_s_max'], 0)} → 8 层 {_f(liqn[8]['tok_s_max'], 0)}",
+           f"冷板预算 {_f(q_liq, 1)} W/mm² = {_f(q_liq * 24, 0)} W；3 层已把它用满"])}
     {_row(["供电是不是墙", f"IR 不是（{_f(dp['pdn_max']['dv_total_mv'], 1)} mV &lt; 37.5 mV）；单根 TSV 是",
            f"{_f(dp['pdn_max']['i_total_a'], 0)} A 要 ≥{_f(dp['pdn_max']['tsv_density_required'], 0)} 个/mm²，默认 20 不够"])}
     {_row(["层序（谁在上面）要紧吗", f"不要紧：最好与最差只差 {_f(place['spread_k'], 1)} K",
@@ -140,11 +141,11 @@ def build(res, outdir, sitedir):
   <table>
     <tr><th>参数</th><th>取值</th><th>依据</th></tr>
     {_row(["层数", f"{nstar} 层存算 + 1 层逻辑", "容量向上取整；逻辑层放 NoC、接口与存储控制器"])}
-    {_row(["足迹 / 堆高", f"24 mm² / {_f(nstar * 50, 0)} µm", "裸片 50 µm 减薄 + 混合键合"])}
+    {_row(["足迹 / 堆高", f"24 mm² / {_f((nstar + 1) * 50, 0)} µm", f"{nstar} 层存算 + 1 层逻辑，各 50 µm 减薄 + 键合界面"])}
     {_row(["冷却", "冷板（单面）", f"满速 {_f(dp['p_max_w'], 1)} W = {_f(dp['w_mm2_max'], 2)} W/mm²；风冷预算只有 {_f(q_air, 1)}"])}
-    {_row(["可持续吞吐", f"{_f(dp['tok_s_max'], 0)} tok/s", f"算力上限；目标 {_f(target, 0)} tok/s 有 {_f(dp['tok_s_max'] / target, 0)} 倍余量"])}
+    {_row(["可持续吞吐", f"{_f(dp['tok_s_max'], 0)} tok/s", f"热流上限（算力上限 {_f(dp['tok_s_ceiling'], 0)} 还没用到）；目标 {_f(target, 0)} 有 {_f(dp['tok_s_max'] / target, 0)} 倍余量"])}
     {_row(["目标工况功耗", f"{_f(dp['p_target_w'], 1)} W", "其中逻辑层静态 3.0 W 占大头，阵列只占小部分"])}
-    {_row(["供电 TSV", f"≥{_f(dp['pdn_max']['tsv_density_required'], 0)} 个/mm²", "单根 ≤50 mA；面积代价约 0.1%"])}
+    {_row(["供电 TSV", f"≥{_f(dp['pdn_max']['tsv_density_required'], 0)} 个/mm²", f"单根 ≤{_f(i_max_ma, 0)} mA；面积代价约 {_f(dp['pdn_max']['tsv_area_overhead_pct'], 2)}%"])}
   </table>
   <div class="foot"><span>叠到第几层</span><span>2 / 14</span></div>
 </section>""")
@@ -225,7 +226,7 @@ def build(res, outdir, sitedir):
            "e<sub>MAC</sub> = 100 fJ（宏级 10 TOPS/W）；e<sub>bit</sub> = 5 pJ（HBM）/ 0.05 pJ（键合）"])}
     {_row(["热", "G·T = P(N,T)；P<sub>leak</sub> = 8%·P<sub>dyn</sub>·2<sup>(T−25)/20</sup>；面热流 q = P/A ≤ q<sub>max</sub>",
            "一维热阻网络逐层到冷板；泄漏与温度做不动点迭代"])}
-    {_row(["供电", "I = P/V<sub>dd</sub>；ΔV = I·(R<sub>tsv</sub>(n) + R<sub>pkg</sub>)；i<sub>tsv</sub> ≤ 50 mA",
+    {_row(["供电", f"I = P/V<sub>dd</sub>；ΔV = I·(R<sub>tsv</sub>(n) + R<sub>pkg</sub>)；i<sub>tsv</sub> ≤ {_f(i_max_ma, 0)} mA",
            "V<sub>dd</sub> = 0.75 V；R<sub>pkg</sub> = 0.3 mΩ"])}
   </table>
   <h3>两个工况，必须分开算</h3>
@@ -326,14 +327,15 @@ def build(res, outdir, sitedir):
     N=3 一步跨到 {_f(airn[3]['tok_s_max'], 0)}（{_f(airn[3]['tok_s_max'] / airn[2]['tok_s_max'], 0)} 倍）——<b>这是悬崖，不是斜坡</b>。</li>
     <li><b>热流密度到顶</b>：3 层满速 {_f(airn[3]['p_max_w'], 1)} W 正好把 0.5 W/mm² 的预算用满；
     再加层，功率不变而吞吐不变（N≥4 的 {_f(airn[8]['tok_s_max'], 0)} 与 N=3 的 {_f(airn[3]['tok_s_max'], 0)} 差不到 0.2%）。</li>
-    <li><b>冷板把预算翻四倍</b>：同样 3 层，冷板到 {_f(dp['tok_s_max'], 0)} tok/s；第 4 层再到 {_f(liqn[4]['tok_s_max'], 0)}，
-    第 5 层起也平了（{_f(liqn[5]['tok_s_max'], 0)}）。</li>
+    <li><b>冷板把预算抬到 {_f(q_liq, 1)} W/mm²</b>：同样 3 层，冷板到 {_f(dp['tok_s_max'], 0)} tok/s（{_f(dp['tok_s_max'] / airn[3]['tok_s_max'], 1)} 倍）；
+    但第 4 层就是 {_f(liqn[4]['tok_s_max'], 0)}，第 8 层 {_f(liqn[8]['tok_s_max'], 0)}——<b>冷板也是第 4 层起白叠</b>。</li>
   </ul>
-  <blockquote>把平台的高度写成式子（忽略泄漏与静态功耗）：
-  <b>tok/s ≤ (q<sub>max</sub> · A − P<sub>static</sub>) / E<sub>token</sub></b>
-  = （{_f(q_air, 1)} × 24 − 3）/ {_f(e_mj / 1e3, 4)} ≈ <b>{_f(ceiling_air, 0)}</b>（风冷）、
-  ≈ <b>{_f(ceiling_liq, 0)}</b>（冷板）。这个式子里没有 N。
-  <b>层数只决定「装不装得下」和「够不够到这条线」，不决定线有多高。</b></blockquote>
+  <blockquote>把平台的高度写成式子：
+  <b>tok/s ≤ (q<sub>max</sub> · A − P<sub>static</sub>) / E<sub>token</sub></b>。
+  这个式子里没有 N。代入得风冷上界 {_f(ceiling_air, 0)}、冷板上界 {_f(ceiling_liq, 0)}，
+  而模型给出 {_f(airn[3]['tok_s_max'], 0)} 与 {_f(dp['tok_s_max'], 0)}——
+  <b>差的那一截是 80 °C 上的泄漏</b>（约占动态功耗 64%）：闭式只是上界，泄漏削掉一半以上。
+  这条缺口本身就是结论：热预算有一半是被自己的泄漏吃掉的。</blockquote>
   <div class="foot"><span>叠到第几层</span><span>8 / 14</span></div>
 </section>""")
 
@@ -364,9 +366,9 @@ def build(res, outdir, sitedir):
     </div>
   </div>
   <h3>双面冷却值不值</h3>
-  <p>把冷板也贴到顶面，等于拿到第二份 0.5 W/mm² 的预算：风冷双面 3 层能到
+  <p>把冷板也贴到顶面，等于拿到第二份 {_f(q_air, 1)} W/mm² 的预算、热阻也并联减半：风冷双面 3 层能到
   {_f(dsn[3]['tok_s_max'], 0)} tok/s，是单面的 {_f(dsn[3]['tok_s_max'] / airn[3]['tok_s_max'], 1)} 倍，
-  但仍只有单面冷板的一半（{_f(dp['tok_s_max'], 0)}）。<b>它是一条可以谈成本的选择题，不是「越冷越好」。</b></p>
+  是单面冷板的 {_f(dsn[3]['tok_s_max'] / dp['tok_s_max'], 2)} 倍。<b>一条可以谈成本的选择题，不是「越冷越好」。</b></p>
   <div class="foot"><span>叠到第几层</span><span>9 / 14</span></div>
 </section>""")
 
@@ -381,8 +383,9 @@ def build(res, outdir, sitedir):
     {_row(["总电流", f"{_f(dp['pdn_max']['i_total_a'], 1)} A", "I = P / 0.75 V", "小封装上的大电流"])}
     {_row(["IR drop", f"{_f(dp['pdn_max']['dv_total_mv'], 1)} mV（封装 {_f(dp['pdn_max']['dv_pkg_mv'], 1)} + TSV {_f(dp['pdn_max']['dv_tsv_mv'], 1)}）",
            "≤ 5% × 0.75 V = 37.5 mV", f"通过，余量 {_f(dp['pdn_max']['ir_margin'] * 100, 0)}%"])}
-    {_row(["所需供电 TSV 密度", f"{_f(dp['pdn_max']['tsv_density_required'], 0)} 个/mm²", "单根 ≤ 50 mA", "默认 20 个/mm² 不够，需 2.2 倍"])}
+    {_row(["所需供电 TSV 密度", f"{_f(dp['pdn_max']['tsv_density_required'], 0)} 个/mm²", f"单根 ≤ {_f(i_max_ma, 0)} mA", f"默认 20 个/mm² 不够，需 {_f(dp['pdn_max']['tsv_density_required'] / 20, 1)} 倍"])}
     {_row(["TSV 面积代价", f"{_f(dp['pdn_max']['tsv_area_overhead_pct'], 2)}%", "按 5 µm 直径计", "可忽略，代价在工艺不在面积"])}
+    {_row(["单根电流密度", "2.0×10⁵ A/cm²", "Cu 电迁移经验限 ~1×10⁵", "按 20 mA/根定上限；50 mA 会超一个量级"])}
   </table>
   <blockquote>这条账本来是我以为会最先成为墙的：{_f(dp['pdn_max']['i_total_a'], 0)} A 穿过多层堆叠，听起来就不可能。
   算下来 IR 只有 {_f(dp['pdn_max']['dv_total_mv'], 0)} mV——<b>真正的约束是每根 TSV 的载流上限，它逼出一个密度规格
@@ -453,6 +456,10 @@ def build(res, outdir, sitedir):
   <blockquote>ρ 是全篇最弱的假设（区间跨一个数量级）。所以本报告的结论应该这样读：
   <b>「3 层」不是绝对数字，而是「密度 50 MB/mm² 下 7B@4bit 的容量解」</b>。
   密度变一半，答案就变一半——这条换算关系比具体数字更有用。</blockquote>
+  <p class="small">关于「e_mac 变 10 倍、吞吐只变 {_f(sens[2]['tok_swing_ratio'], 1)} 倍」：设计点本身是
+  <b>热流受限</b>的，算力还有 {_f(dp['tok_s_ceiling'] / dp['tok_s_max'], 1)} 倍余量；
+  只有把每 MAC 能量放大到 4 倍（400 fJ），算力上限才掉到热流上限之下，吞吐才开始跟能量走。
+  不是线性关系失效，是两根约束在交叉。</p>
   <p class="small">其次是频率（{_f(sens[1]['tok_swing_ratio'], 1)}×）与每 MAC 能量（{_f(sens[2]['tok_swing_ratio'], 1)}×）：
   这两个都是「满速功耗」的乘数，而满速功耗决定你能不能吃到那条热流预算。泄漏与外部搬运能量在本设计点<strong>不影响结论</strong>
   （1.0×），因为此时两者都不是瓶颈——这不代表它们不重要，只代表在这个点上它们不是杠杆。</p>
@@ -498,6 +505,7 @@ def build(res, outdir, sitedir):
     <li>不含成品率、不含 TSV 应力、不含电迁移寿命、不含封装翘曲；这些都会让「8 层」比图上更难。</li>
     <li>不含 ECC / 冗余 / 权重校准的代价；4-bit MLC 的实际可用精度通常要打折，等效于密度下降（第 12 页）。</li>
     <li>不含软件栈：算子映射效率按 100% 计，真实编译器会再打 0.5–0.8 的折。</li>
+    <li>不含 KV cache 与 batch：tok/s 是单序列解码速率，不是可服务并发；KV cache 还会吃掉容量（7B/4k 上下文约 0.5 GB）。</li>
   </ul>
   <h3>最弱的三个假设</h3>
   <table>

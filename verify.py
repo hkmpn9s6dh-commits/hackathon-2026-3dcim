@@ -151,7 +151,10 @@ def main():
     check("throughput:peak_within_4_tiers",
           max(liq.values(), key=lambda r: r["tok_s_max"])["n_cim"] <= 4,
           "冷板峰值不该出现在 5 层以后")
-    check("throughput:design_is_compute_bound", dp["binding_constraint"] == "compute")
+    check("throughput:design_is_flux_bound", dp["binding_constraint"] == "flux",
+          f"设计点受限项应为热流密度，实际 {dp['binding_constraint']}")
+    check("throughput:compute_headroom_left", dp["tok_s_ceiling"] > dp["tok_s_max"],
+          "算力上限应当还没被用满，否则第 8 页的说法不成立")
     check("throughput:design_above_target",
           dp["tok_s_max"] > P.WORKLOAD["tok_s_target"]["value"])
     check("throughput:target_not_reached_at_2_air",

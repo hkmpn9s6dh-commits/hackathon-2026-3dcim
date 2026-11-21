@@ -35,8 +35,8 @@ STACK = dict(
     k_si=_p(120.0, "W/(m*K)", "pub", "硅热导率 100–150，取 120"),
     r_iface=_p(0.1, "K*mm^2/W", "pub", "混合键合界面热阻 0.05–0.2", 0.05, 0.2),
     r_tim=_p(0.3, "K*mm^2/W", "pub", "TIM 0.1–0.5", 0.1, 0.5),
-    r_hs_air=_p(1.2, "K/W", "est", "小尺寸被动/低速风冷散热器，1.0–2.0", 1.0, 2.0),
-    r_hs_liquid=_p(0.08, "K/W", "est", "冷板/微流道，0.05–0.15", 0.05, 0.15),
+    r_hs_air=_p(6.2, "K/W", "est", "按 q_max×A=7.2 W、ΔT=45 K 反推（含扩散热阻）；芯片级风冷实测 5–10", 4.0, 10.0),
+    r_hs_liquid=_p(1.03, "K/W", "est", "按 q_max×A=28.8 W、ΔT=30 K 反推（单相冷板）；两相微流道可到 0.6", 0.6, 1.5),
     t_amb=_p(35.0, "degC", "est", "边缘机房/户外机箱环境温度"),
     t_jmax=_p(85.0, "degC", "pub", "结温上限，商用档 85/105，取 85"),
 )
@@ -50,7 +50,7 @@ POWER = dict(
 
 # ---------------------------------------------------------------- 工作负载
 WORKLOAD = dict(
-    params=_p(7.0e9, "params", "pub", "7B 级 LLM（Llama-2-7B 量级）"),
+    params=_p(7.0e9, "params", "pub", "7B 级 LLM（Llama-2-7B 量级 6.74B，取整 7.0e9）；Qwen2.5-7B 7.62B 另列一行"),
     bits=_p(4.0, "bit", "pub", "4-bit 量化权重"),
     e_ext=_p(5e-12, "J/bit", "pub", "外部 HBM3e 读能量 3–7 pJ/bit", 3e-12, 7e-12),
     e_hb=_p(0.05e-12, "J/bit", "pub", "混合键合层间链路 0.03–0.1 pJ/bit", 0.03e-12, 0.1e-12),
@@ -63,7 +63,7 @@ PDN = dict(
     vdd=_p(0.75, "V", "pub", "近阈值/低电压档 0.6–0.9，取 0.75"),
     r_pkg=_p(0.3e-3, "ohm", "est", "封装+基板供电路径（含板上去耦）0.2–0.5 mΩ", 0.2e-3, 0.5e-3),
     tsv_density=_p(20.0, "1/mm^2", "est", "供电 TSV 面密度（远低于信号键合密度）", 8.0, 40.0),
-    tsv_i_max=_p(50e-3, "A", "pub", "5 µm Cu TSV 载流上限约 50 mA"),
+    tsv_i_max=_p(20e-3, "A", "pub", "5 µm Cu TSV：按 J≤1e5 A/cm² 的电迁移限，约 20 mA（50 mA 时 J=2.5e5，超一个量级）"),
     tsv_d=_p(5e-6, "m", "pub", "供电 TSV 直径 5 µm"),
     tsv_len=_p(200e-6, "m", "est", "贯穿 4 层的供电通路长度"),
     rho_cu=_p(1.7e-8, "ohm*m", "pub", "铜电阻率"),
@@ -74,8 +74,8 @@ PDN = dict(
 # q_max：允许的面热流密度（W/mm²）。小足迹上真正卡人的是它，不是 R_hs：
 # 热量从 24 mm² 的 die 摊到散热器上，扩散热阻决定了「一个平方毫米最多能出多少瓦」。
 COOLING = {
-    "air": dict(label="风冷（被动/低速风扇）", r_hs=STACK["r_hs_air"]["value"], q_max=0.5),
-    "liquid": dict(label="冷板/微流道", r_hs=STACK["r_hs_liquid"]["value"], q_max=2.0),
+    "air": dict(label="风冷（被动/低速风扇）", r_hs=STACK["r_hs_air"]["value"], q_max=0.3),
+    "liquid": dict(label="冷板/微流道", r_hs=STACK["r_hs_liquid"]["value"], q_max=1.2),
 }
 
 # ---------------------------------------------------------------- 层角色

@@ -73,6 +73,9 @@ def evaluate(n_cim, cooling="air", double_sided=False, target=None, has_dram=Fal
     tok_ceiling = n_cim * (P.CIM["array_rows"]["value"] * P.CIM["array_cols"]["value"]
                            * P.CIM["tiles_per_tier"]["value"] * P.CIM["freq_nom"]["value"]) / macs
 
+    # 双面冷却：同一份热量走两条并联路径，等效 R 减半、面热流预算翻倍
+    r_hs_eff = P.COOLING[cooling]["r_hs"] / (2.0 if double_sided else 1.0)
+
     tok_per_tier = (P.CIM["array_rows"]["value"] * P.CIM["array_cols"]["value"]
                     * P.CIM["tiles_per_tier"]["value"] * P.CIM["freq_nom"]["value"]) / macs
 
@@ -90,7 +93,8 @@ def evaluate(n_cim, cooling="air", double_sided=False, target=None, has_dram=Fal
         return out
 
     def solve_at(s):
-        st = ThermalStack(powers_at(s), areas, cooling=cooling, double_sided=double_sided)
+        st = ThermalStack(powers_at(s), areas, cooling=cooling, double_sided=double_sided,
+                          r_hs=r_hs_eff)
         T, leak, it, res = st.solve_with_leakage()
         tiers = [float(_clamp_temp(v)) for v in st.tier_temps(T)]
         return st, tiers, leak, it, res

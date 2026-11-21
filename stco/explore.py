@@ -43,12 +43,18 @@ def memory_strategies():
     return rows
 
 
-def placement(n_cim=3, cooling="liquid", double_sided=False, throughput=None,
-              freq_scale=1.0):
-    """穷举层序，按满速峰值结温排序（存算层同功耗 → 去重后 3!/... 种）。"""
-    target = P.WORKLOAD["tok_s_target"]["value"] if throughput is None else throughput
-    p_tier = P.cim_tier_power() * freq_scale
-    roles = {"logic": (P.LAYERS["logic"]["p_dyn"], P.LAYERS["logic"]["area"]),
+def placement(n_cim=3, cooling="liquid", double_sided=False, target=None):
+    """穷举层序，按「可持续工况」下的峰值结温排序。
+
+    注意：不能用满频功耗去排——满频已经超出散热能力，所有排列都会热失控，
+    等于拿一个不存在的工况做比较。这里改用设计点求出的可持续功耗。
+    """
+    dp = design.evaluate(n_cim, cooling=cooling, double_sided=double_sided, target=target)
+    duty = dp["tok_s_max"] / dp["tok_s_ceiling"]
+    p_tier = P.cim_tier_power() * duty
+    p_logic = (P.LAYERS["logic"]["p_dyn"]
+               + dp["tok_s_max"] * dp["spill_j_per_token"])
+    roles = {"logic": (p_logic, P.LAYERS["logic"]["area"]),
              "dram": (P.LAYERS["dram"]["p_dyn"], P.LAYERS["dram"]["area"])}
     for i in range(n_cim):
         roles[f"cim{i}"] = (p_tier, P.LAYERS["cim"]["area"])
@@ -69,6 +75,7 @@ def placement(n_cim=3, cooling="liquid", double_sided=False, throughput=None,
     return dict(best=dict(order=scored[0][1], t_hot_c=scored[0][0]),
                 worst=dict(order=scored[-1][1], t_hot_c=scored[-1][0]),
                 spread_k=scored[-1][0] - scored[0][0],
+                duty=duty,
                 n_perm=len(scored), all=[dict(order=o, t_hot_c=t) for t, o in scored])
 
 
