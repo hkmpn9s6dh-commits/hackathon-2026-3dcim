@@ -48,8 +48,8 @@ li { margin-bottom: 1.2mm; }
   本作品只回答一个问题：<b>在给定足迹、给定功耗预算下，第几层开始是白叠的。</b></p>
   <div class="kpi">
     <div><b>3 层</b><span>装下 7B@4bit（3,338 MB）所需的最小层数</span></div>
-    <div><b>2,418</b><span>风冷 3 层的可持续吞吐（tok/s）</span></div>
-    <div><b>26,655</b><span>冷板 3 层的可持续吞吐（tok/s）</span></div>
+    <div><b>2,730</b><span>风冷 3 层的可持续吞吐（tok/s）</span></div>
+    <div><b>24,017</b><span>冷板 3 层的可持续吞吐（tok/s）</span></div>
   </div>
   <blockquote>结论：层数由<b>容量</b>决定；吞吐的上限由<b>足迹上的热流密度</b>决定，与层数几乎无关；
   供电由<b>单根 TSV 的载流</b>决定。三件事在三个不同的轴上——这就是「堆得越高越快」失效的原因。</blockquote>
@@ -64,21 +64,21 @@ li { margin-bottom: 1.2mm; }
   <table>
     <tr><th style="width:24%">问题</th><th style="width:38%">答案</th><th>怎么算出来的</th></tr>
     <tr class=''><td>7B@4bit 要几层才装得下</td><td>3 层（容量 3,600 MB ≥ 模型 3,338 MB）</td><td>单层 24 mm² × 50 MB/mm² = 1200 MB，向上取整</td></tr>
-    <tr class=''><td>少一层会怎样</td><td>2 层只有 42 tok/s，3 层 2,418（57 倍）</td><td>装不下的 938 MB/token 走外部 HBM，每 bit 5 pJ</td></tr>
-    <tr class=''><td>风冷多一层有用吗</td><td>没有：3 层 2,418 → 8 层 2,415</td><td>足迹热流密度锁在 0.3 W/mm²，功率天花板不随层数变</td></tr>
-    <tr class=''><td>冷板多一层有用吗</td><td>也没有：3 层 26,655 → 4 层 26,616 → 8 层 26,451</td><td>冷板预算 1.2 W/mm² = 29 W；3 层已把它用满</td></tr>
-    <tr class=''><td>供电是不是墙</td><td>IR 不是（25.4 mV &lt; 37.5 mV）；单根 TSV 是</td><td>38 A 要 ≥80 个/mm²，默认 20 不够</td></tr>
-    <tr class=''><td>层序（谁在上面）要紧吗</td><td>不要紧：最好与最差只差 1.0 K</td><td>50 µm 薄 die 的层间热阻只有外部热阻的 2%</td></tr>
+    <tr class=''><td>少一层会怎样</td><td>2 层只有 48 tok/s，3 层 2,730（57 倍）</td><td>装不下的 938 MB/token 走外部 HBM，每 bit 5 pJ</td></tr>
+    <tr class=''><td>风冷多一层有用吗</td><td>没有：3 层 2,730 → 8 层 2,726</td><td>足迹热流密度锁在 0.2 W/mm²，功率天花板不随层数变</td></tr>
+    <tr class=''><td>冷板多一层有用吗</td><td>也没有：3 层 24,017 → 4 层 23,985 → 8 层 23,850</td><td>冷板预算 1.0 W/mm² = 24 W；3 层已把它用满</td></tr>
+    <tr class=''><td>供电是不是墙</td><td>IR 不是（21.1 mV &lt; 37.5 mV）；单根 TSV 是</td><td>32 A 要 ≥67 个/mm²，默认 20 不够</td></tr>
+    <tr class=''><td>层序（谁在上面）要紧吗</td><td>不要紧：最好与最差只差 1.3 K</td><td>50 µm 薄 die 的层间热阻只有外部热阻的 2%</td></tr>
   </table>
   <h3>推荐设计点</h3>
   <table>
     <tr><th>参数</th><th>取值</th><th>依据</th></tr>
     <tr class=''><td>层数</td><td>3 层存算 + 1 层逻辑</td><td>容量向上取整；逻辑层放 NoC、接口与存储控制器</td></tr>
     <tr class=''><td>足迹 / 堆高</td><td>24 mm² / 200 µm</td><td>3 层存算 + 1 层逻辑，各 50 µm 减薄 + 键合界面</td></tr>
-    <tr class=''><td>冷却</td><td>冷板（单面）</td><td>满速 28.8 W = 1.20 W/mm²；风冷预算只有 0.3</td></tr>
-    <tr class=''><td>可持续吞吐</td><td>26,655 tok/s</td><td>热流上限（算力上限 44,939 还没用到）；目标 1,000 有 27 倍余量</td></tr>
-    <tr class=''><td>目标工况功耗</td><td>4.2 W</td><td>其中逻辑层静态 3.0 W 占大头，阵列只占小部分</td></tr>
-    <tr class=''><td>供电 TSV</td><td>≥80 个/mm²</td><td>单根 ≤20 mA；面积代价约 0.00%</td></tr>
+    <tr class=''><td>冷却</td><td>冷板（单面）</td><td>满速 24.0 W = 1.00 W/mm²；风冷预算只有 0.2</td></tr>
+    <tr class=''><td>可持续吞吐</td><td>24,017 tok/s</td><td>热流上限（算力上限 44,939 还没用到）；目标 1,000 有 24 倍余量</td></tr>
+    <tr class=''><td>目标工况功耗</td><td>2.1 W</td><td>其中逻辑层静态 1.2 W；阵列只占 0.94 W</td></tr>
+    <tr class=''><td>供电 TSV</td><td>≥67 个/mm²</td><td>单根 ≤20 mA；面积代价约 0.00%</td></tr>
   </table>
   <div class="foot"><span>叠到第几层</span><span>2 / 14</span></div>
 </section>
@@ -119,7 +119,7 @@ li { margin-bottom: 1.2mm; }
     <div>
       <h3>为什么是这个形状</h3>
       <ul>
-        <li><b>逻辑层放最下面</b>：接封装、接外部存储、接 NoC，走线最短；它同时是 3.0 W 的恒定点与搬运能量的落点。</li>
+        <li><b>逻辑层放最下面</b>：接封装、接外部存储、接 NoC，走线最短；它同时是 1.2 W 的恒定点与搬运能量的落点。</li>
         <li><b>存算层之间直接键合</b>：激活跨层只走键合面，0.05 pJ/bit，比走外部 HBM 省两个数量级。</li>
         <li><b>不做 8 层</b>：风冷下第 4 层起吞吐不再增长（第 8 页），而堆高、成品率、供电 TSV 都在变难。</li>
       </ul>
@@ -132,7 +132,7 @@ li { margin-bottom: 1.2mm; }
         <tr class=''><td>键合间距</td><td>2 µm</td></tr>
         <tr class=''><td>每层阵列</td><td>32 个 128×128 宏</td></tr>
         <tr class=''><td>标称频率</td><td>200 MHz</td></tr>
-        <tr class=''><td>供电 TSV</td><td>≥80 个/mm²</td></tr>
+        <tr class=''><td>供电 TSV</td><td>≥67 个/mm²</td></tr>
       </table>
     </div>
   </div>
@@ -156,11 +156,11 @@ li { margin-bottom: 1.2mm; }
   <div class="two">
     <div>
       <p><b>解码（decode）</b>：每 token 7e9 次 MAC，占空比 = 目标吞吐 / 算力上限。功耗随吞吐线性增长，
-      本设计点只有 4.2 W。<b>它决定的是容量够不够</b>——不够就得搬权重，能量立刻涨两个数量级。</p>
+      本设计点只有 2.1 W。<b>它决定的是容量够不够</b>——不够就得搬权重，能量立刻涨两个数量级。</p>
     </div>
     <div>
       <p><b>满速（prefill / 大 batch）</b>：所有阵列跑满频，功耗与吞吐无关，
-      28.8 W 压在 24 mm² 上 = 1.20 W/mm²。
+      24.0 W 压在 24 mm² 上 = 1.00 W/mm²。
       <b>它决定的是散热与供电。</b></p>
     </div>
   </div>
@@ -205,11 +205,11 @@ li { margin-bottom: 1.2mm; }
     每 token 多付 39 mJ。</li>
     <li>3 层 = 3600 MB：装下，只剩 262 MB 余量（7.3%）。
     <b>余量薄是这个设计最脆的地方</b>，第 12 页会量化。</li>
-    <li>4 层 = 4800 MB：容量多 33%，风冷下吞吐不涨（2,418 ≈ 2,418），属于白叠；
+    <li>4 层 = 4800 MB：容量多 33%，风冷下吞吐不涨（2,729 ≈ 2,730），属于白叠；
     冷板下多 -0%。</li>
   </ul>
   <blockquote>如果模型换成 7B@8bit（6,676 MB），答案立刻变成 6 层——
-  而 6 层在风冷下只有 2,417 tok/s，比 3 层还低。
+  而 6 层在风冷下只有 2,728 tok/s，比 3 层还低。
   <b>「量化位宽」在这里等价于「层数预算」</b>，这是本模型给出的、可以直接指导产品定义的一条换算关系。</blockquote>
   <div class="foot"><span>叠到第几层</span><span>7 / 14</span></div>
 </section>
@@ -220,23 +220,25 @@ li { margin-bottom: 1.2mm; }
   <p class="cap">图 3　可持续吞吐 vs 层数（对数纵轴）。虚线是产品目标 1,000 tok/s。</p>
   <table>
     <tr><th>N</th><th>风冷 tok/s</th><th>风冷 W/mm²</th><th>冷板 tok/s</th><th>冷板 W/mm²</th><th>受限项</th></tr>
-    <tr class=''><td>1</td><td>19</td><td>0.30</td><td>208</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>2</td><td>42</td><td>0.30</td><td>469</td><td>1.20</td><td>热流密度</td></tr><tr class='hl'><td>3</td><td>2,418</td><td>0.30</td><td>26,655</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>4</td><td>2,418</td><td>0.30</td><td>26,616</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>5</td><td>2,417</td><td>0.30</td><td>26,575</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>6</td><td>2,417</td><td>0.30</td><td>26,534</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>7</td><td>2,416</td><td>0.30</td><td>26,493</td><td>1.20</td><td>热流密度</td></tr><tr class=''><td>8</td><td>2,415</td><td>0.30</td><td>26,451</td><td>1.20</td><td>热流密度</td></tr>
+    <tr class=''><td>1</td><td>21</td><td>0.20</td><td>187</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>2</td><td>48</td><td>0.20</td><td>423</td><td>1.00</td><td>热流密度</td></tr><tr class='hl'><td>3</td><td>2,730</td><td>0.20</td><td>24,017</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>4</td><td>2,729</td><td>0.20</td><td>23,985</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>5</td><td>2,728</td><td>0.20</td><td>23,952</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>6</td><td>2,728</td><td>0.20</td><td>23,918</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>7</td><td>2,727</td><td>0.20</td><td>23,884</td><td>1.00</td><td>热流密度</td></tr><tr class=''><td>8</td><td>2,726</td><td>0.20</td><td>23,850</td><td>1.00</td><td>热流密度</td></tr>
   </table>
   <h3>三件事同时发生在 N=3 这个点上</h3>
   <ul>
-    <li><b>容量刚好装下</b>：N=2 时 28% 的权重要走 HBM，吞吐被能量按在 42 tok/s；
-    N=3 一步跨到 2,418（57 倍）——<b>这是悬崖，不是斜坡</b>。</li>
-    <li><b>热流密度到顶</b>：3 层满速 7.2 W 正好把 0.5 W/mm² 的预算用满；
-    再加层，功率不变而吞吐不变（N≥4 的 2,415 与 N=3 的 2,418 差不到 0.2%）。</li>
-    <li><b>冷板把预算抬到 1.2 W/mm²</b>：同样 3 层，冷板到 26,655 tok/s（11.0 倍）；
-    但第 4 层就是 26,616，第 8 层 26,451——<b>冷板也是第 4 层起白叠</b>。</li>
+    <li><b>容量刚好装下</b>：N=2 时 28% 的权重要走 HBM，吞吐被能量按在 48 tok/s；
+    N=3 一步跨到 2,730（57 倍）——<b>这是悬崖，不是斜坡</b>。</li>
+    <li><b>热流密度到顶</b>：3 层满速 4.8 W，正好把 0.2 W/mm² 的预算用满
+    （4.8 / 24 = 0.20）；
+    再加层，功率不变、吞吐也不变（N≥4 的 2,726 与 N=3 的 2,730 差不到 1%）。</li>
+    <li><b>冷板把预算抬到 1.0 W/mm²</b>：同样 3 层，冷板到 24,017 tok/s（8.8 倍）；
+    但第 4 层就是 23,985，第 8 层 23,850——<b>冷板也是第 4 层起白叠</b>。</li>
   </ul>
   <blockquote>把平台的高度写成式子：
   <b>tok/s ≤ (q<sub>max</sub> · A − P<sub>static</sub>) / E<sub>token</sub></b>。
-  这个式子里没有 N。代入得风冷上界 5,998、冷板上界 36,847，
-  而模型给出 2,418 与 26,655——
-  <b>差的那一截是 80 °C 上的泄漏</b>（约占动态功耗 64%）：闭式只是上界，泄漏削掉一半以上。
-  这条缺口本身就是结论：热预算有一半是被自己的泄漏吃掉的。</blockquote>
+  这个式子里没有 N。代入得风冷上界 5,141、冷板上界 32,562，
+  而模型给出 2,730 与 24,017。
+  差的那一截是泄漏：风冷削掉 47%、
+  冷板削掉 26%——
+  <b>越凉削得越少，因为泄漏随温度指数上升</b>。闭式只能当上界用。</blockquote>
   <div class="foot"><span>叠到第几层</span><span>8 / 14</span></div>
 </section>
 
@@ -247,8 +249,9 @@ li { margin-bottom: 1.2mm; }
   <div class="two">
     <div>
       <h3>温度反而是最松的一条</h3>
-      <p>本设计点满速结温只有 66.2 °C，离 85 °C 还有 19 K。
-      风冷 3 层也只有 79.9 °C。<b>也就是说，风冷的问题不是「烧得太热」，
+      <p>本设计点的满速结温是 66.4 °C（24.0 W、冷板 R<sub>hs</sub> 1.25 K/W、
+      冷媒 35 °C），离 85 °C 还有 19 K。
+      风冷 3 层也只有 80.3 °C。<b>也就是说，风冷的问题不是「烧得太热」，
       而是「这点面积根本散不出这么多瓦」</b>——热量还没把结温推上去，扩散热阻先到顶了。</p>
       <p>这一点很容易被 1D 热阻模型骗过去：只要 R<sub>hs</sub> 给得足够小，模型会允许 24 mm² 里塞几十瓦。
       所以模型里必须同时有<b>面热流密度上限 q<sub>max</sub></b>，否则会得出「冷板能带走 600 W」这种结论。</p>
@@ -259,15 +262,15 @@ li { margin-bottom: 1.2mm; }
       本设计点 20 次收敛、残差 0.0。
       在 85 °C 上泄漏是动态功耗的 64%——
       <b>供电与散热要按 1.4 倍的动态功耗设计</b>，这部分预算常常在纸面上被漏掉。</p>
-      <p>层间温差：自下而上各层 65.1 / 65.7 / 66.0 / 66.2 °C，
-      极差 1.1 K。
+      <p>层间温差：自下而上各层 65.4 / 65.9 / 66.2 / 66.4 °C，
+      极差 1.0 K。
       薄 die 让「内层更热」这个直觉在这个尺度上不成立。</p>
     </div>
   </div>
   <h3>双面冷却值不值</h3>
-  <p>把冷板也贴到顶面，等于拿到第二份 0.3 W/mm² 的预算、热阻也并联减半：风冷双面 3 层能到
-  12,215 tok/s，是单面的 5.1 倍，
-  是单面冷板的 0.46 倍。<b>一条可以谈成本的选择题，不是「越冷越好」。</b></p>
+  <p>把冷板也贴到顶面，等于拿到第二份 0.2 W/mm² 的预算、热阻也并联减半：风冷双面 3 层能到
+  9,272 tok/s，是单面的 3.4 倍，
+  是单面冷板的 0.39 倍。<b>一条可以谈成本的选择题，不是「越冷越好」。</b></p>
   <div class="foot"><span>叠到第几层</span><span>9 / 14</span></div>
 </section>
 
@@ -277,22 +280,22 @@ li { margin-bottom: 1.2mm; }
   <p class="cap">图 5　总功耗 vs IR drop（蓝）与满足载流所需的供电 TSV 面密度（红虚线）。</p>
   <table>
     <tr><th>量</th><th>满速值</th><th>判据</th><th>结论</th></tr>
-    <tr class=''><td>总电流</td><td>38.4 A</td><td>I = P / 0.75 V</td><td>小封装上的大电流</td></tr>
-    <tr class=''><td>IR drop</td><td>25.4 mV（封装 11.5 + TSV 13.9）</td><td>≤ 5% × 0.75 V = 37.5 mV</td><td>通过，余量 32%</td></tr>
-    <tr class=''><td>所需供电 TSV 密度</td><td>80 个/mm²</td><td>单根 ≤ 20 mA</td><td>默认 20 个/mm² 不够，需 4.0 倍</td></tr>
+    <tr class=''><td>总电流</td><td>32.0 A</td><td>I = P / 0.75 V</td><td>小封装上的大电流</td></tr>
+    <tr class=''><td>IR drop</td><td>21.1 mV（封装 9.6 + TSV 11.5）</td><td>≤ 5% × 0.75 V = 37.5 mV</td><td>通过，余量 44%</td></tr>
+    <tr class=''><td>所需供电 TSV 密度</td><td>67 个/mm²</td><td>单根 ≤ 20 mA</td><td>默认 20 个/mm² 不够，需 3.3 倍</td></tr>
     <tr class=''><td>TSV 面积代价</td><td>0.00%</td><td>按 5 µm 直径计</td><td>可忽略，代价在工艺不在面积</td></tr>
-    <tr class=''><td>单根电流密度</td><td>2.0×10⁵ A/cm²</td><td>Cu 电迁移经验限 ~1×10⁵</td><td>按 20 mA/根定上限；50 mA 会超一个量级</td></tr>
+    <tr class=''><td>单根电流密度</td><td>101,858.9×10⁵ A/cm²</td><td>Cu 电迁移经验限 ~1×10⁵</td><td>20 mA 恰好压线；50 mA 到 2.5 倍，不可用</td></tr>
   </table>
-  <blockquote>这条账本来是我以为会最先成为墙的：38 A 穿过多层堆叠，听起来就不可能。
-  算下来 IR 只有 25 mV——<b>真正的约束是每根 TSV 的载流上限，它逼出一个密度规格
-  （≥80 个/mm²），而不是逼死这个架构</b>。
+  <blockquote>这条账本来是我以为会最先成为墙的：32 A 穿过多层堆叠，听起来就不可能。
+  算下来 IR 只有 21 mV——<b>真正的约束是每根 TSV 的载流上限，它逼出一个密度规格
+  （≥67 个/mm²），而不是逼死这个架构</b>。
   报告保留这条否定结果，因为它决定了要不要为供电留面积。</blockquote>
   <h3>这条规格怎么落到版图上</h3>
   <ul>
     <li>供电 TSV 与信号键合分开布：TSV 走阵列空隙与宏边界，不占键合面。</li>
-    <li>80 个/mm² × 24 mm² ≈ 1,920 根，
+    <li>67 个/mm² × 24 mm² ≈ 1,600 根，
     按 5 µm 直径算占 0.00% 面积；按 40 µm 栅格排，落在 32 个宏的间隙里。</li>
-    <li>IR 余量只有 32%，板上必须去耦；若 R<sub>pkg</sub> 恶化到 0.5 mΩ，余量会被吃掉
+    <li>IR 余量只有 44%，板上必须去耦；若 R<sub>pkg</sub> 恶化到 0.5 mΩ，余量会被吃掉
     （此项目前不在敏感度表里，属未验证）。</li>
   </ul>
   <div class="foot"><span>叠到第几层</span><span>10 / 14</span></div>
@@ -304,11 +307,11 @@ li { margin-bottom: 1.2mm; }
   于是写了个穷举器，把逻辑层、容量层、三层存算共 20 种去重排列全部解一遍热网络。</p>
   <table>
     <tr><th>排列</th><th>满速峰值结温</th></tr>
-    <tr class='hl'><td>最优：cim → cim → cim → dram → logic</td><td>75.17 °C</td></tr>
-    <tr class=''><td>最差：logic → dram → cim → cim → cim</td><td>76.14 °C</td></tr>
-    <tr class=''><td>全部排列的极差</td><td>0.97 K</td></tr>
+    <tr class='hl'><td>最优：cim → cim → cim → dram → logic</td><td>77.49 °C</td></tr>
+    <tr class=''><td>最差：logic → dram → cim → cim → cim</td><td>78.82 °C</td></tr>
+    <tr class=''><td>全部排列的极差</td><td>1.33 K</td></tr>
   </table>
-  <blockquote>1.0 K 的极差，在 50 K 的预算里几乎等于噪声。
+  <blockquote>1.3 K 的极差，在 50 K 的预算里几乎等于噪声。
   <b>原因很简单：50 µm 薄 die 的层间热阻约 0.02 K/W，而 TIM + 散热器是它的 20 倍以上。</b>
   热量不是「卡在中间」，而是一起被最外面那一段堵住。</blockquote>
   <h3>这条否定结果有什么用</h3>
@@ -328,10 +331,10 @@ li { margin-bottom: 1.2mm; }
   <p class="cap">图 6　单参数取区间两端时，设计点可持续吞吐的移动（对数横轴，虚线为基准）。</p>
   <table>
     <tr><th>参数</th><th>区间</th><th>设计点吞吐 (tok/s)</th><th>倍数</th></tr>
-    <tr class=''><td>density</td><td>12.5 – 100 MB/mm^2</td><td>438 – 44,939</td><td>102.7×</td></tr><tr class=''><td>freq_nom</td><td>1e+08 – 3e+08 Hz</td><td>22,469 – 64,583</td><td>2.9×</td></tr><tr class=''><td>e_mac</td><td>4e-14 – 4e-13 J/MAC</td><td>16,146 – 44,939</td><td>2.8×</td></tr><tr class=''><td>leak_frac</td><td>0.05 – 0.15 1</td><td>44,939 – 44,939</td><td>1.0×</td></tr><tr class=''><td>e_ext</td><td>3e-12 – 7e-12 J/bit</td><td>44,939 – 44,939</td><td>1.0×</td></tr>
+    <tr class=''><td>density</td><td>12.5 – 100 MB/mm^2</td><td>377 – 44,939</td><td>119.1×</td></tr><tr class=''><td>e_mac</td><td>4e-14 – 4e-13 J/MAC</td><td>13,914 – 44,939</td><td>3.2×</td></tr><tr class=''><td>freq_nom</td><td>1e+08 – 3e+08 Hz</td><td>22,469 – 55,657</td><td>2.5×</td></tr><tr class=''><td>leak_frac</td><td>0.05 – 0.15 1</td><td>44,939 – 44,939</td><td>1.0×</td></tr><tr class=''><td>e_ext</td><td>3e-12 – 7e-12 J/bit</td><td>44,939 – 44,939</td><td>1.0×</td></tr>
   </table>
   <h3>最脆的地方不是热量，是密度</h3>
-  <p>把密度从 50 调到 12.5，设计点吞吐会掉到 438 tok/s——
+  <p>把密度从 50 调到 12.5，设计点吞吐会掉到 377 tok/s——
   因为 7B@4bit 突然需要 12 层，而任何冷却都装不下 12 层。这条不是热的问题，是容量的算术：</p>
   <table>
     <tr><th>ρ (MB/mm²)</th><th>单层容量 (MB)</th><th>7B@4bit 所需层数</th><th>结论</th></tr>
@@ -340,11 +343,11 @@ li { margin-bottom: 1.2mm; }
   <blockquote>ρ 是全篇最弱的假设（区间跨一个数量级）。所以本报告的结论应该这样读：
   <b>「3 层」不是绝对数字，而是「密度 50 MB/mm² 下 7B@4bit 的容量解」</b>。
   密度变一半，答案就变一半——这条换算关系比具体数字更有用。</blockquote>
-  <p class="small">关于「e_mac 变 10 倍、吞吐只变 2.8 倍」：设计点本身是
-  <b>热流受限</b>的，算力还有 1.7 倍余量；
+  <p class="small">关于「e_mac 变 10 倍、吞吐只变 2.5 倍」：设计点本身是
+  <b>热流受限</b>的，算力还有 1.9 倍余量；
   只有把每 MAC 能量放大到 4 倍（400 fJ），算力上限才掉到热流上限之下，吞吐才开始跟能量走。
   不是线性关系失效，是两根约束在交叉。</p>
-  <p class="small">其次是频率（2.9×）与每 MAC 能量（2.8×）：
+  <p class="small">其次是频率（3.2×）与每 MAC 能量（2.5×）：
   这两个都是「满速功耗」的乘数，而满速功耗决定你能不能吃到那条热流预算。泄漏与外部搬运能量在本设计点<strong>不影响结论</strong>
   （1.0×），因为此时两者都不是瓶颈——这不代表它们不重要，只代表在这个点上它们不是杠杆。</p>
   <div class="foot"><span>叠到第几层</span><span>12 / 14</span></div>
@@ -358,16 +361,16 @@ li { margin-bottom: 1.2mm; }
     <tr class=''><td>容量区（本作品）</td><td>模型字节 / 单层容量 ∈ (1, 4]</td><td>三维全驻留值得做；层数按容量取整，冷却按满速的热流密度选</td></tr>
     <tr class=''><td>算力区</td><td>模型装得下，但单层算力不够</td><td>先加层；此时层数是线性的，前提是热流预算跟得上（本例需冷板）</td></tr>
     <tr class=''><td>搬运区</td><td>模型字节 / 单层容量 &gt; 6</td><td>不要试图全驻留（70B 要 28 层）；改用近存/键合流式，靠 0.05 pJ/bit 而不是 5 pJ/bit</td></tr>
-    <tr class=''><td>散热区</td><td>W/mm² &gt; 0.3 且只能风冷</td><td>层数不是杠杆：风冷 3 层已到顶，加层吞吐不涨（8 层 2,415）</td></tr>
-    <tr class=''><td>供电区</td><td>总电流 / 面积 &gt; 5,333 A/mm²</td><td>先加供电 TSV 密度；IR 通常不是问题，单根载流才是</td></tr>
+    <tr class=''><td>散热区</td><td>W/mm² &gt; 0.2 且只能风冷</td><td>层数不是杠杆：风冷 3 层已到顶，加层吞吐不涨（8 层 2,726）</td></tr>
+    <tr class=''><td>供电区</td><td>总电流 / 面积 &gt; 4,444 A/mm²</td><td>先加供电 TSV 密度；IR 通常不是问题，单根载流才是</td></tr>
   </table>
   <h3>本作品自己落在哪</h3>
-  <p>7B@4bit / 24 mm² → 容量比 2.78，落在容量区；满速 1.20 W/mm²，
-  超过风冷的 0.3 → 必须冷板。两条判据同时指向「3 层 + 冷板」，而不是「越多越好」。</p>
+  <p>7B@4bit / 24 mm² → 容量比 2.78，落在容量区；满速 1.00 W/mm²，
+  超过风冷的 0.2 → 必须冷板。两条判据同时指向「3 层 + 冷板」，而不是「越多越好」。</p>
   <blockquote>如果只能从这份报告里带走一句话：<b>三维堆叠买到的是容量和延迟，不是免费的吞吐。
   吞吐的上限写在足迹的热流密度上，而足迹是二维的——它不会因为你叠得更高而变大。</b></blockquote>
-  <p class="small">补充一句工程判断：如果产品只要 1,000 tok/s，那么 1 层 + 冷板（208 tok/s）
-  其实不够，2 层（469）刚好卡在目标线上——<b>目标定在 1000 tok/s 这个位置，恰好把「2 层不够、3 层有余」暴露出来</b>。
+  <p class="small">补充一句工程判断：如果产品只要 1,000 tok/s，那么 1 层 + 冷板（187 tok/s）
+  其实不够，2 层（423）刚好卡在目标线上——<b>目标定在 1000 tok/s 这个位置，恰好把「2 层不够、3 层有余」暴露出来</b>。
   定目标的时候顺手看一眼这条曲线，比事后加层便宜。</p>
   <div class="foot"><span>叠到第几层</span><span>13 / 14</span></div>
 </section>
@@ -387,7 +390,7 @@ li { margin-bottom: 1.2mm; }
     <tr><th>假设</th><th>取值</th><th>为什么弱</th><th>影响</th></tr>
     <tr class=''><td>密度 ρ</td><td>50 MB/mm²</td><td>4-bit MLC 面密度的工程估计，公开可核的商用宏数据很少</td><td>直接决定层数（12.5 → 12 层，100 → 2 层）</td></tr>
     <tr class=''><td>每 MAC 能量</td><td>100 fJ</td><td>宏级 10 TOPS/W；系统级含缓冲/NoC 通常更差</td><td>满速功耗线性放大，4 倍时吞吐掉到 0.65×</td></tr>
-    <tr class=''><td>面热流上限 q<sub>max</sub></td><td>0.3 / 1.2 W/mm²</td><td>风冷/冷板的经验区间，随封装与散热器形态变化大</td><td>决定平台高度：q 翻倍，吞吐几乎翻倍</td></tr>
+    <tr class=''><td>面热流上限 q<sub>max</sub></td><td>0.2 / 1.0 W/mm²</td><td>风冷/冷板的经验区间，随封装与散热器形态变化大</td><td>决定平台高度：q 翻倍，吞吐几乎翻倍</td></tr>
   </table>
   <h3>怎么复现</h3>
   <p class="mono">py -3 run.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 模型 → results.json → 图 → 本 PDF → 作品页<br>

@@ -35,8 +35,8 @@ STACK = dict(
     k_si=_p(120.0, "W/(m*K)", "pub", "硅热导率 100–150，取 120"),
     r_iface=_p(0.1, "K*mm^2/W", "pub", "混合键合界面热阻 0.05–0.2", 0.05, 0.2),
     r_tim=_p(0.3, "K*mm^2/W", "pub", "TIM 0.1–0.5", 0.1, 0.5),
-    r_hs_air=_p(6.2, "K/W", "est", "按 q_max×A=7.2 W、ΔT=45 K 反推（含扩散热阻）；芯片级风冷实测 5–10", 4.0, 10.0),
-    r_hs_liquid=_p(1.03, "K/W", "est", "按 q_max×A=28.8 W、ΔT=30 K 反推（单相冷板）；两相微流道可到 0.6", 0.6, 1.5),
+    r_hs_air=_p(9.4, "K/W", "est", "按 q_max×A=4.8 W、ΔT=45 K 反推（含扩散热阻）；芯片级风冷实测 6–15", 5.0, 15.0),
+    r_hs_liquid=_p(1.25, "K/W", "est", "按 q_max×A=24 W、ΔT=30 K 反推（单相冷板）；两相微流道可到 0.6", 0.6, 2.0),
     t_amb=_p(35.0, "degC", "est", "边缘机房/户外机箱环境温度"),
     t_jmax=_p(85.0, "degC", "pub", "结温上限，商用档 85/105，取 85"),
 )
@@ -74,14 +74,14 @@ PDN = dict(
 # q_max：允许的面热流密度（W/mm²）。小足迹上真正卡人的是它，不是 R_hs：
 # 热量从 24 mm² 的 die 摊到散热器上，扩散热阻决定了「一个平方毫米最多能出多少瓦」。
 COOLING = {
-    "air": dict(label="风冷（被动/低速风扇）", r_hs=STACK["r_hs_air"]["value"], q_max=0.3),
-    "liquid": dict(label="冷板/微流道", r_hs=STACK["r_hs_liquid"]["value"], q_max=1.2),
+    "air": dict(label="风冷（带小散热器）", r_hs=STACK["r_hs_air"]["value"], q_max=0.2),
+    "liquid": dict(label="冷板/微流道", r_hs=STACK["r_hs_liquid"]["value"], q_max=1.0),
 }
 
 # ---------------------------------------------------------------- 层角色
 # 每层：role, 动态功耗(W) @ 标称频率, 面积(mm^2)
 LAYERS = {
-    "logic": dict(label="逻辑/互连层", p_dyn=3.0, area=24.0, kind="est"),
+    "logic": dict(label="逻辑/互连层", p_dyn=1.2, area=24.0, kind="est"),
     "cim": dict(label="存算层", p_dyn=None, area=24.0, kind="derived"),
     "dram": dict(label="容量层（eDRAM/权重复制）", p_dyn=4.0, area=24.0, kind="est"),
 }
